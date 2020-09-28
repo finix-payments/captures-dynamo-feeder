@@ -1,0 +1,23 @@
+### Gradle ###
+.gradle
+*/build
+/build
+
+# Ignore Gradle GUI config
+gradle-app.setting
+# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+!gradle-wrapper.jar
+# Cache of project
+.gradletasknamecache
+
+### IntelliJ template
+.idea/
+*.iml
+out
+.DS_Store
+
+## generated files ##
+bin
+.project
+.classpath
+.settings

@@ -1,0 +1,12 @@
+pluginManagement {
+    repositories {
+        maven {
+            url "https://finixpayments.jfrog.io/finixpayments/gradle-plugins"
+            credentials {
+                username 'consumer'
+                password 'AP7hXoQCpc1Wn8nDk4MMGFFwGu5ez6jF5dJPvH'
+            }
+        }
+    }
+}
+rootProject.name = 'captures-dynamo-feeder'

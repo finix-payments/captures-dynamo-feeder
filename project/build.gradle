@@ -1,0 +1,78 @@
+import org.gradle.api.tasks.wrapper.Wrapper
+
+plugins {
+    id 'java-library'
+    id 'io.franzbecker.gradle-lombok' version '1.14'
+    id "io.spring.dependency-management" version '1.0.7.RELEASE'
+}
+
+group 'com.finixpayments.captures'
+version '1.0.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+wrapper {
+    gradleVersion = '5.2.1'
+    distributionType = Wrapper.DistributionType.ALL
+}
+
+repositories {
+    mavenLocal()
+    maven {
+        url "https://finixpayments.jfrog.io/finixpayments/libs-release"
+        credentials {
+            username 'consumer'
+            password 'AP7hXoQCpc1Wn8nDk4MMGFFwGu5ez6jF5dJPvH'
+        }
+    }
+    maven {
+        url "https://finixpayments.jfrog.io/finixpayments/libs-snapshot"
+        credentials {
+            username 'consumer'
+            password 'AP7hXoQCpc1Wn8nDk4MMGFFwGu5ez6jF5dJPvH'
+        }
+    }
+}
+
+dependencyManagement {
+    imports {
+        mavenBom 'software.amazon.awssdk:bom:2.10.38'
+    }
+}
+
+dependencies {
+    api 'software.amazon.awssdk:dynamodb'
+//    api 'software.amazon.awssdk:eventbridge'
+    api 'com.amazonaws:aws-lambda-java-core:1.2.0'
+    api 'com.amazonaws:aws-lambda-java-events:2.2.5'
+    api 'com.amazonaws:aws-java-sdk-dynamodb:1.11.511'
+    implementation 'com.oath.cyclops:cyclops:10.3.3'
+    implementation 'com.oath.cyclops:cyclops-pure:10.3.3'
+    implementation 'com.oath.cyclops:cyclops-reactive-collections:10.3.3'
+    implementation 'com.google.guava:guava:27.0.1-jre'
+
+//    api 'com.finixpayments.shared:event-shared:2.0.0'
+
+//    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.3.1'
+//    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3.1'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+lombok {
+    version = '1.18.2'
+    sha256 = ""
+}
+
+task buildZip(type: Zip) {
+    from compileJava
+    from processResources
+    into('lib') {
+        from configurations.runtimeClasspath
+    }
+}
+
+build.dependsOn buildZip

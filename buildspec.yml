@@ -1,0 +1,112 @@
+version: 0.2
+
+env:
+  variables:
+    VERSION_FILE: ".version"
+    # FINIX_ARTIFACTORY_CONTEXTURL: is defined in the AWS CodeBuild console
+    # FINIX_BRANCH: is defined in the AWS CodeBuild console
+    # FINIX_DOMAIN: is defined in the AWS CodeBuild console
+    # FINIX_ENV: is defined in the AWS CodeBuild console
+    # FINIX_GRADLE_DAEMON: is defined in the AWS CodeBuild console
+    # FINIX_LAMBDA_PUB: is defined in the AWS CodeBuild console
+    # FINIX_LAMBDA_SUB: is defined in the AWS CodeBuild console
+  parameter-store:
+    ARTIFACTORY_USERNAME: "/Artifactory/username"
+    ARTIFACTORY_PASSWORD: "/Artifactory/password"
+    GH_PAT_USERNAME: "/Github/PAT/CICD/username"
+    GH_PAT_VAL: "/Github/PAT/CICD/value"
+
+phases:
+  install:
+    commands:
+      ##################################################
+      # CodePipeline does NOT pull the .git dir from Github when it auto downloads the repo!  So, we
+      # have to pull the repo manually; as we need the .git dir to later get the commit message.
+      #
+      # When CodePipeline initially pulls the repo it puts all the files of the branch into the 'src'
+      # dir, *not* into a dir with the name of the repo!!!  When CodePipeline invokes Codebuild it sets
+      # the initial current working dir as the 'src' dir.  To pull the repo manually:
+      # 1) delete all the files that was auto downloaded by CodePipeline,
+      # 2) cd to the parent dir of the 'src' dir,
+      # 3) manually clone the repo INTO the 'src' dir,
+      #   *CRITICAL* as CodePipeline looks for all the artifacts of the build in the 'src' dir!!!
+      # 4) switch to the correct branch
+      #
+      - rm -rf ..?* .[!.]* *
+      - cd ..
+      - git clone --depth 1 --no-single-branch "https://$GH_PAT_USERNAME:$GH_PAT_VAL@github.com/finix-payments/$FINIX_DOMAIN.git" src
+      - cd src
+      - git checkout $FINIX_BRANCH
+      ##################################################
+      # We need to create the `gradle.properties` file before we start the build.
+      # It has the credentials to access our Artifactory repository.
+      #
+      - mkdir ~/.gradle
+      - echo "org.gradle.daemon=$FINIX_GRADLE_DAEMON" >> ~/.gradle/gradle.properties
+      - echo "artifactory_user=$ARTIFACTORY_USERNAME" >> ~/.gradle/gradle.properties
+      - echo "artifactory_password=$ARTIFACTORY_PASSWORD" >> ~/.gradle/gradle.properties
+      - echo "artifactory_contextUrl=$FINIX_ARTIFACTORY_CONTEXTURL" >> ~/.gradle/gradle.properties
+  pre_build:
+    commands:
+      - echo "CODEBUILD_RESOLVED_SOURCE_VERSION is '$CODEBUILD_RESOLVED_SOURCE_VERSION'"
+      - echo "CODEBUILD_SOURCE_REPO_URL is '$CODEBUILD_SOURCE_REPO_URL'"
+      - echo "CODEBUILD_SOURCE_VERSION is '$CODEBUILD_SOURCE_VERSION'"
+      - echo "CODEBUILD_SRC_DIR is '$CODEBUILD_SRC_DIR'"
+      - echo "FINIX_BRANCH is '$FINIX_BRANCH'"
+      - echo "FINIX_DOMAIN is '$FINIX_DOMAIN'"
+  build:
+    commands:
+      ##################################################
+      # Run the Gradle command to build the application binary.
+      # Move the *.jar files to the dir where we initiated the build, to simplify the artifacts:
+      # section at the end of this file.
+      #
+      - cd project
+      - ./gradlew buildZip --parallel
+  post_build:
+    commands:
+      ##################################################
+      # CODEBUILD_START_TIME is in msec, so need to divide
+      # by 1000 to get sec, so that bash 'date -d' can work
+      #
+      - >
+        content="Repo: $(basename -s .git `git config --get remote.origin.url`)/$(git rev-parse --abbrev-ref HEAD)\n
+        Status: Succeeded\n
+        Commit ID: $(git rev-parse --short --verify HEAD)\n
+        Comment: $(git log --format=%B -n 1  | tr '\n' ' ')\n
+        Build ID: ${CODEBUILD_BUILD_ID}\n
+        Start Time: $(TZ='America/Los_Angeles' date -d @$((${CODEBUILD_START_TIME}/1000)))"
+      ##################################################
+      # Deploy to Lambda that moves msgs from SQS to DDB
+      # NOTE: this expects the Lambda fn to already exist.
+      # Also, commands with ':' *must* be put in a YAML
+      # multi-line block (i.e. - >).
+      #
+      - >
+        aws --region ${AWS_REGION} lambda update-function-code
+        --function-name ${FINIX_LAMBDA_PUB}
+        --zip-file fileb://build/distributions/event-lambda-1.0.0-SNAPSHOT.zip
+      - >
+        content_pub="Lambda Fn: ${FINIX_LAMBDA_PUB} | Env: ${FINIX_ENV}\n${content}"
+      - >
+        json="{'username':'Deploy-Bot',
+        'icon_emoji':':robot_face:',
+        'attachments':[{'text': '${content_pub}', 'color':'good', 'mrkdwn_in': [\"text\", \"pretext\"]}]}"
+      - curl -s -d "payload=$json" $FINIX_SLACK_URL
+      ##################################################
+      # Deploy to Lambda that moves msgs from DDB to SNS
+      # NOTE: this expects the Lambda fn to already exist.
+      # Also, commands with ':' *must* be put in a YAML
+      # multi-line block (i.e. - >).
+      #
+      - >
+        aws --region ${AWS_REGION} lambda update-function-code
+        --function-name ${FINIX_LAMBDA_SUB}
+        --zip-file fileb://build/distributions/event-lambda-1.0.0-SNAPSHOT.zip
+      - >
+        content_sub="Lambda Fn: ${FINIX_LAMBDA_SUB} | Env: ${FINIX_ENV}\n${content}"
+      - >
+        json="{'username':'Deploy-Bot',
+        'icon_emoji':':robot_face:',
+        'attachments':[{'text': '${content_sub}', 'color':'good', 'mrkdwn_in': [\"text\", \"pretext\"]}]}"
+      - curl -s -d "payload=$json" $FINIX_SLACK_URL

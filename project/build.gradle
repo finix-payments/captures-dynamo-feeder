@@ -11,7 +11,7 @@ version '1.0.0-SNAPSHOT'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
-
+ext['finixEventSharedVersion'] = '2.0.33'
 wrapper {
     gradleVersion = '5.2.1'
     distributionType = Wrapper.DistributionType.ALL
@@ -46,13 +46,13 @@ dependencies {
 //    api 'software.amazon.awssdk:eventbridge'
     api 'com.amazonaws:aws-lambda-java-core:1.2.0'
     api 'com.amazonaws:aws-lambda-java-events:2.2.5'
-    api 'com.amazonaws:aws-java-sdk-dynamodb:1.11.511'
-    implementation 'com.oath.cyclops:cyclops:10.3.3'
-    implementation 'com.oath.cyclops:cyclops-pure:10.3.3'
-    implementation 'com.oath.cyclops:cyclops-reactive-collections:10.3.3'
+    api 'com.amazonaws:aws-java-sdk-dynamodb:1.11.870'
+    implementation 'com.oath.cyclops:cyclops:10.4.0'
+    implementation 'com.oath.cyclops:cyclops-pure:10.4.0'
+    implementation 'com.oath.cyclops:cyclops-reactive-collections:10.4.0'
     implementation 'com.google.guava:guava:27.0.1-jre'
 
-//    api 'com.finixpayments.shared:event-shared:2.0.0'
+    implementation group: 'com.finixpayments.shared', name: 'event-shared', version: "${finixEventSharedVersion}"
 
 //    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.3.1'
 //    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3.1'

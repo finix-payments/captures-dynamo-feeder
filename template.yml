@@ -1,0 +1,25 @@
+# This template.yml is only used in local testing against sam
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Local Test
+  SAM Template for Dynamo Feeder Lambda
+# More info about Globals:
+# https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 60
+Resources:
+  CapturesDynamoFeeder:
+    # More info about Function Resource:
+    # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function
+    FunctionName: CapturesDynamoFeeder
+    Properties:
+      CodeUri: /Users/vamshiyamsani/finix/captures-dynamo-feeder
+      Handler: com.finix.captures.lambda.CapturesDynamoFeeder::handleRequest
+      Runtime: java8
+      MemorySize: 256
+      Environment:
+        Variables:
+          DDB_CAPTURES_TABLE: 'capture_submissions'

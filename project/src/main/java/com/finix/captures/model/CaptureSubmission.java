@@ -7,10 +7,12 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTypeConverted;
 import com.finix.captures.utils.BigDecimalConverter;
 import java.math.BigDecimal;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-@DynamoDBTable(tableName = "capture_submissions")
+@AllArgsConstructor
+@DynamoDBTable(tableName = "ReplaceThisWithLambdaEnvironmentTableName")
 public class CaptureSubmission {
 
   @DynamoDBHashKey(attributeName = "submission_id")

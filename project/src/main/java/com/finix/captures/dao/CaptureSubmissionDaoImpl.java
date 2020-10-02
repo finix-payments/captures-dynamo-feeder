@@ -12,6 +12,8 @@ import java.util.List;
 
 public class CaptureSubmissionDaoImpl implements CaptureSubmissionDao {
 
+  private static long _15_DAYS_IN_MILLISECONDS = 15*24*60*60*1000;
+
   private DynamoDBMapper mapper;
   private String ddbTableName;
 
@@ -30,7 +32,10 @@ public class CaptureSubmissionDaoImpl implements CaptureSubmissionDao {
 
   public Try<Boolean, Exception> writeAll(List<CaptureSubmission> captureSubmissions)  {
     TransactionWriteRequest transactionWriteRequest = new TransactionWriteRequest();
-    captureSubmissions.stream().map(cs -> transactionWriteRequest.addPut(cs));
+    captureSubmissions.forEach(cs -> {
+      cs.setExpiresAt((System.currentTimeMillis() + _15_DAYS_IN_MILLISECONDS) / 1000);
+      transactionWriteRequest.addPut(cs);
+    });
     try{
       mapper.transactionWrite(transactionWriteRequest);
       return Try.success(true);

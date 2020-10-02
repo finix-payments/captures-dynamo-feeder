@@ -60,15 +60,13 @@ public class CapturesDynamoFeeder implements RequestHandler<SQSEvent, Void> {
             logger.log("Saved " + size +  "captures to DynamoDB."))
         .peekFailed(ex ->{
             logger.log("Failed to save " + size + " captures to DynamoDB.");
-            logger.log("Dynamo Exception Message: " + ex.getMessage());
-            logger.log("Dynamo stack trace: " + Throwables.getStackTraceAsString(ex));
+            logger.log("DynamoDB exception message: " + ex.getMessage());
+            logger.log("DynamoDB stack trace: " + Throwables.getStackTraceAsString(ex));
         });
 
-    if(writeToDynamo.isFailure()){
-      throw new RuntimeException("Lambda job failed to write to DynamoDB.");
-    } else {
-      return null;
-    }
+    return writeToDynamo.fold(
+        b -> null,
+        ex -> {throw new RuntimeException("Lambda job failed to write to DynamoDB.");});
   }
 
   private Either<Tuple2<SQSMessage, Exception>, Boolean> handleMessage(SQSMessage msg) {

@@ -3,7 +3,6 @@ import org.gradle.api.tasks.wrapper.Wrapper
 plugins {
     id 'java-library'
     id 'io.franzbecker.gradle-lombok' version '1.14'
-//    id "io.spring.dependency-management" version '1.0.7.RELEASE'
 }
 
 group 'com.finixpayments.captures'
@@ -35,15 +34,7 @@ repositories {
     }
 }
 
-//dependencyManagement {
-//    imports {
-//        mavenBom 'software.amazon.awssdk:bom:2.10.38'
-//    }
-//}
-
 dependencies {
-//    api 'software.amazon.awssdk:dynamodb'
-//    api 'software.amazon.awssdk:eventbridge'
     api 'com.amazonaws:aws-lambda-java-core:1.2.0'
     api 'com.amazonaws:aws-lambda-java-events:2.2.5'
     api 'com.amazonaws:aws-java-sdk-dynamodb:1.11.870'
@@ -53,9 +44,6 @@ dependencies {
     implementation 'com.google.guava:guava:27.0.1-jre'
 
     implementation group: 'com.finixpayments.shared', name: 'event-shared', version: "${finixEventSharedVersion}"
-
-//    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.3.1'
-//    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3.1'
 }
 
 test {
@@ -63,7 +51,7 @@ test {
 }
 
 lombok {
-    version = '1.18.2'
+    version = '1.18.12'
     sha256 = ""
 }
 

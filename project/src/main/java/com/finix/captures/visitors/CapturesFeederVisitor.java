@@ -31,7 +31,14 @@ public class CapturesFeederVisitor implements ConsumerVisitor {
   }
 
   private CaptureSubmission convertToDbModel(io.finix.event.CaptureSubmission cs){
-    return new CaptureSubmission(cs.getBatchSubmissionId(), cs.getTransferId(),cs.getAmount(),
-        cs.getProcessorTxnId(), cs.getOrderId(), cs.getReportGroup(), cs.getMerchantId());
+    return CaptureSubmission.builder()
+        .submissionId(cs.getBatchSubmissionId())
+        .transferId(cs.getTransferId())
+        .amount(cs.getAmount())
+        .processorOperationId(cs.getProcessorTxnId())
+        .orderId(cs.getOrderId())
+        .reportGroup(cs.getReportGroup())
+        .merchantId(cs.getMerchantId())
+        .build();
   }
 }

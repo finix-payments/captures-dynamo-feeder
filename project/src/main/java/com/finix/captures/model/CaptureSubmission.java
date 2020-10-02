@@ -7,11 +7,15 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTypeConverted;
 import com.finix.captures.utils.BigDecimalConverter;
 import java.math.BigDecimal;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.With;
 
 @Data
-@AllArgsConstructor
+@Builder
 @DynamoDBTable(tableName = "ReplaceThisWithLambdaEnvironmentTableName")
 public class CaptureSubmission {
 
@@ -35,4 +39,8 @@ public class CaptureSubmission {
 
   @DynamoDBAttribute(attributeName = "merchant_id")
   private String merchantId;
+
+  @With
+  @DynamoDBAttribute(attributeName = "expires_at")
+  private long expiresAt;
 }

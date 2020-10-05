@@ -9,7 +9,6 @@ env:
     # FINIX_ENV: is defined in the AWS CodeBuild console
     # FINIX_GRADLE_DAEMON: is defined in the AWS CodeBuild console
     # FINIX_LAMBDA_PUB: is defined in the AWS CodeBuild console
-    # FINIX_LAMBDA_SUB: is defined in the AWS CodeBuild console
   parameter-store:
     ARTIFACTORY_USERNAME: "/Artifactory/username"
     ARTIFACTORY_PASSWORD: "/Artifactory/password"
@@ -85,28 +84,11 @@ phases:
       - >
         aws --region ${AWS_REGION} lambda update-function-code
         --function-name ${FINIX_LAMBDA_PUB}
-        --zip-file fileb://build/distributions/event-lambda-1.0.0-SNAPSHOT.zip
+        --zip-file fileb://build/distributions/captures-dynamo-feeder-1.0.0-SNAPSHOT.zip
       - >
         content_pub="Lambda Fn: ${FINIX_LAMBDA_PUB} | Env: ${FINIX_ENV}\n${content}"
       - >
         json="{'username':'Deploy-Bot',
         'icon_emoji':':robot_face:',
         'attachments':[{'text': '${content_pub}', 'color':'good', 'mrkdwn_in': [\"text\", \"pretext\"]}]}"
-      - curl -s -d "payload=$json" $FINIX_SLACK_URL
-      ##################################################
-      # Deploy to Lambda that moves msgs from DDB to SNS
-      # NOTE: this expects the Lambda fn to already exist.
-      # Also, commands with ':' *must* be put in a YAML
-      # multi-line block (i.e. - >).
-      #
-      - >
-        aws --region ${AWS_REGION} lambda update-function-code
-        --function-name ${FINIX_LAMBDA_SUB}
-        --zip-file fileb://build/distributions/event-lambda-1.0.0-SNAPSHOT.zip
-      - >
-        content_sub="Lambda Fn: ${FINIX_LAMBDA_SUB} | Env: ${FINIX_ENV}\n${content}"
-      - >
-        json="{'username':'Deploy-Bot',
-        'icon_emoji':':robot_face:',
-        'attachments':[{'text': '${content_sub}', 'color':'good', 'mrkdwn_in': [\"text\", \"pretext\"]}]}"
       - curl -s -d "payload=$json" $FINIX_SLACK_URL

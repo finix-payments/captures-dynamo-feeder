@@ -10,8 +10,6 @@ import com.finix.captures.dao.CaptureSubmissionDaoImpl;
 import com.finix.captures.visitors.CapturesFeederVisitor;
 import com.finix.shared.event.ConsumerEventHandlingOrchestrator;
 import com.finix.shared.event.ConsumerEventHandlingOrchestrator.DefaultConsumerEventHandlingOrchestrator;
-import com.finix.shared.event.PublisherEnvelope;
-import com.finix.shared.event.PublisherEnvelopeSQSTransformer;
 import com.google.common.base.Throwables;
 import cyclops.control.Either;
 import cyclops.control.Try;
@@ -19,15 +17,12 @@ import cyclops.data.Vector;
 import cyclops.data.tuple.Tuple;
 import cyclops.data.tuple.Tuple2;
 import cyclops.reactive.ReactiveSeq;
-import java.util.Arrays;
 import java.util.Map;
-import java.util.Optional;
 
 public class CapturesDynamoFeeder implements RequestHandler<SQSEvent, Void> {
 
-  private static final String ddbTableName = System.getenv("DDB_CAPTURES_TABLE");
-
-  private static final PublisherEnvelopeSQSTransformer eventTransformer = new PublisherEnvelopeSQSTransformer();
+  private final static String ddbTableName = System.getenv("DDB_CAPTURES_TABLE");
+  private final static CaptureSubmissionDao dao = new CaptureSubmissionDaoImpl(ddbTableName);
   private final DefaultConsumerEventHandlingOrchestrator eventHandlingOrchestrator = ConsumerEventHandlingOrchestrator
       .defaultPlan();
   private final CapturesFeederVisitor captureSubmitterVisitor = new CapturesFeederVisitor();
@@ -38,7 +33,6 @@ public class CapturesDynamoFeeder implements RequestHandler<SQSEvent, Void> {
     final ReactiveSeq<Either<Tuple2<SQSMessage, Exception>, Boolean>> seqEithers = ReactiveSeq.fromStream(event
         .getRecords().stream())
         .map(this::handleMessage);
-
     final Tuple2<Vector<Tuple2<SQSMessage, Exception>>, Vector<Boolean>> partitionEithers = Either
         .partitionEithers(seqEithers);
     final boolean hasErrors = !partitionEithers._1().isEmpty();
@@ -52,8 +46,8 @@ public class CapturesDynamoFeeder implements RequestHandler<SQSEvent, Void> {
           });
       throw new RuntimeException("Some messages in the SQS batch failed to deserialize.");
     }
-    CaptureSubmissionDao dao = new CaptureSubmissionDaoImpl(ddbTableName);
 
+    // lambda log4j2 library
     final int size = captureSubmitterVisitor.getCaptures().size();
     final Try<Boolean, Exception> writeToDynamo = dao.writeAll(captureSubmitterVisitor.getCaptures())
         .peek(t ->
@@ -74,15 +68,5 @@ public class CapturesDynamoFeeder implements RequestHandler<SQSEvent, Void> {
     return eventHandlingOrchestrator.handle(headers, msg.getBody(), captureSubmitterVisitor)
         .toEither()
         .mapLeft(ex -> Tuple.tuple(msg, ex));
-  }
-
-  // Due to the Visitor pattern implicit in event-shared library, have to use side-effects to add
-  // CaptureSubmission objects to the visitor's private List
-  private Try<Boolean, Exception> buildRequest(PublisherEnvelope envelope, Map<String, String> headers) {
-    return Try.withCatch(() -> Optional.ofNullable(envelope.getMessage())
-        .map(Arrays::toString)
-        .orElseThrow(() -> new RuntimeException("Publisher envelope body is empty.")), Exception.class)
-            .flatMap(payload -> eventHandlingOrchestrator.handle(headers, payload,
-                captureSubmitterVisitor));
   }
 }

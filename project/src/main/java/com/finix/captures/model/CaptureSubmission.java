@@ -5,7 +5,6 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTypeConverted;
-import com.finix.captures.utils.BigDecimalConverter;
 import java.math.BigDecimal;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -25,8 +24,8 @@ public class CaptureSubmission {
   @DynamoDBRangeKey(attributeName = "transfer_id")
   private String transferId;
 
-  @DynamoDBTypeConverted(converter = BigDecimalConverter.class)
-  private BigDecimal amount;
+  @DynamoDBAttribute(attributeName = "amount")
+  private Long amount;
 
   @DynamoDBAttribute(attributeName = "processor_operation_id")
   private String processorOperationId;
@@ -40,7 +39,6 @@ public class CaptureSubmission {
   @DynamoDBAttribute(attributeName = "merchant_id")
   private String merchantId;
 
-  @With
   @DynamoDBAttribute(attributeName = "expires_at")
-  private long expiresAt;
+  private Long expiresAt;
 }

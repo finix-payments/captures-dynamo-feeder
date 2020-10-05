@@ -10,7 +10,7 @@ version '1.0.0-SNAPSHOT'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
-ext['finixEventSharedVersion'] = '2.0.33'
+
 wrapper {
     gradleVersion = '5.2.1'
     distributionType = Wrapper.DistributionType.ALL
@@ -35,19 +35,17 @@ repositories {
 }
 
 dependencies {
-    api 'com.amazonaws:aws-lambda-java-core:1.2.0'
-    api 'com.amazonaws:aws-lambda-java-events:2.2.5'
-    api 'com.amazonaws:aws-java-sdk-dynamodb:1.11.870'
+    api 'com.amazonaws:aws-lambda-java-core:1.2.1'
+    api 'com.amazonaws:aws-lambda-java-events:3.3.1'
+    api 'com.amazonaws:aws-java-sdk-dynamodb:1.11.875'
     implementation 'com.oath.cyclops:cyclops:10.4.0'
     implementation 'com.oath.cyclops:cyclops-pure:10.4.0'
     implementation 'com.oath.cyclops:cyclops-reactive-collections:10.4.0'
-    implementation 'com.google.guava:guava:27.0.1-jre'
+    implementation 'com.google.guava:guava:29.0-jre'
 
-    implementation group: 'com.finixpayments.shared', name: 'event-shared', version: "${finixEventSharedVersion}"
-}
-
-test {
-    useJUnitPlatform()
+    implementation('com.finixpayments.shared:event-shared:2.0.33') {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-data-redis'
+    }
 }
 
 lombok {

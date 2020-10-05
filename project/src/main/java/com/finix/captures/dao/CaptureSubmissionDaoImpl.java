@@ -8,11 +8,13 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig.Table
 import com.amazonaws.services.dynamodbv2.datamodeling.TransactionWriteRequest;
 import com.finix.captures.model.CaptureSubmission;
 import cyclops.control.Try;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 public class CaptureSubmissionDaoImpl implements CaptureSubmissionDao {
 
-  private static long _15_DAYS_IN_MILLISECONDS = 15*24*60*60*1000;
+  private static long DAYS_TO_EXPIRE = 15;
 
   private DynamoDBMapper mapper;
   private String ddbTableName;
@@ -32,8 +34,9 @@ public class CaptureSubmissionDaoImpl implements CaptureSubmissionDao {
 
   public Try<Boolean, Exception> writeAll(List<CaptureSubmission> captureSubmissions)  {
     TransactionWriteRequest transactionWriteRequest = new TransactionWriteRequest();
+    final long expiresAt = Instant.now().plus(DAYS_TO_EXPIRE, ChronoUnit.DAYS).getEpochSecond();
     captureSubmissions.forEach(cs -> {
-      cs.setExpiresAt((System.currentTimeMillis() + _15_DAYS_IN_MILLISECONDS) / 1000);
+      cs.setExpiresAt(expiresAt);
       transactionWriteRequest.addPut(cs);
     });
     try{

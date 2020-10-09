@@ -47,7 +47,6 @@ public class CapturesDynamoFeeder implements RequestHandler<SQSEvent, Void> {
       throw new RuntimeException("Some messages in the SQS batch failed to deserialize.");
     }
 
-    // lambda log4j2 library
     final int size = captureSubmitterVisitor.getCaptures().size();
     final Try<Boolean, Exception> writeToDynamo = dao.writeAll(captureSubmitterVisitor.getCaptures())
         .peek(t ->

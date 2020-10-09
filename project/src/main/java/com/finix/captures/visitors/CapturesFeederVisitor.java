@@ -4,6 +4,7 @@ import com.finix.captures.model.CaptureSubmission;
 import com.finix.shared.event.ConsumerEnvelope;
 import com.finix.shared.event.ConsumerMessage;
 import com.finix.shared.event.ConsumerVisitor;
+import io.finix.event.CaptureDynamoSubmissionRequested;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -24,8 +25,8 @@ public class CapturesFeederVisitor implements ConsumerVisitor {
   }
 
   @Override
-  public boolean captureDynamoSubmission(ConsumerMessage<io.finix.event.CaptureSubmission> message) {
-    final Optional<io.finix.event.CaptureSubmission> cs = Optional
+  public boolean captureDynamoSubmission(ConsumerMessage<CaptureDynamoSubmissionRequested> message) {
+    final Optional<CaptureDynamoSubmissionRequested> cs = Optional
         .ofNullable(message)
         .map(ConsumerMessage::getPayload)
         .map(ConsumerEnvelope::getMessage);
@@ -34,14 +35,14 @@ public class CapturesFeederVisitor implements ConsumerVisitor {
           .map(this::convertToDbModel)
           .orElseThrow(
               () -> new RuntimeException(
-                  "Could not unwrap ConsumerMessage to CaptureSubmission."));
+                  "Could not unwrap ConsumerMessage<CaptureDynamoSubmissionRequested> to CaptureSubmission."));
       captures.add(capture);
       uniqueKeys.add(capture.getSubmissionId() + "#" + capture.getTransferId());
     }
     return true;
   }
 
-  private CaptureSubmission convertToDbModel(io.finix.event.CaptureSubmission cs){
+  private CaptureSubmission convertToDbModel(CaptureDynamoSubmissionRequested cs){
     return CaptureSubmission.builder()
         .submissionId(cs.getBatchSubmissionId())
         .transferId(cs.getTransferId())
